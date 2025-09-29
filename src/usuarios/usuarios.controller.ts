@@ -14,18 +14,28 @@ class UsuariosController {
         const senhaCriptografada = await bcrypt.hash(senha, 10)
         const usuario = { nome, idade, email, senha: senhaCriptografada }
 
+    try {
     const db = dbPromise ? await dbPromise : dbSync
     const resultado = await db.collection('usuarios').insertOne(usuario)
-    res.status(201).json({nome,idade,email,_id: resultado.insertedId })
+    return res.status(201).json({nome,idade,email,_id: resultado.insertedId })
+    } catch (err: any) {
+        console.error('Erro ao inserir usuário:', err && err.message ? err.message : err)
+        return res.status(500).json({ error: 'Erro ao cadastrar usuário. Por favor, tente novamente.' })
+    }
     }
     async listar(req: Request, res: Response) {
+    try {
     const db = dbPromise ? await dbPromise : dbSync
     const usuarios = await db.collection('usuarios').find().toArray()
         const usuariosSemSenha = usuarios.map((u: any) => {
             const { senha, ...resto } = u
             return resto
         })
-        res.status(200).json(usuariosSemSenha)
+        return res.status(200).json(usuariosSemSenha)
+    } catch (err: any) {
+        console.error('Erro ao listar usuários:', err && err.message ? err.message : err)
+        return res.status(500).json({ error: 'Erro ao listar usuários. Por favor, tente novamente.' })
+    }
     }
 }
 
