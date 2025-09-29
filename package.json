@@ -1,0 +1,35 @@
+{
+  "name": "1023b-backend-novo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "dev:mongo": "tsx watch src/index-mongo.ts",
+    "build": "npm install && tsc",
+    "start": "node dist/index-mongo.js",
+    "test": "jest --watch"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "type": "module",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bson": "^6.10.4",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "mongodb": "^6.19.0",
+    "mysql2": "^3.14.3"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/express": "^5.0.3",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.3.0",
+    "jest": "^30.1.3",
+    "ts-jest": "^29.4.4",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.20.4",
+    "typescript": "^5.9.2"
+  }
+}
