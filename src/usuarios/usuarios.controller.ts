@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { db } from '../database/banco-mongo.js'
+import { dbPromise, db as dbSync } from '../database/banco-mongo.js'
 import bcrypt from 'bcrypt'
 class UsuariosController {
     async adicionar(req: Request, res: Response) {
@@ -14,12 +14,17 @@ class UsuariosController {
         const senhaCriptografada = await bcrypt.hash(senha, 10)
         const usuario = { nome, idade, email, senha: senhaCriptografada }
 
-        const resultado = await db.collection('usuarios').insertOne(usuario)
-        res.status(201).json({nome,idade,email,_id: resultado.insertedId })
+    const db = dbPromise ? await dbPromise : dbSync
+    const resultado = await db.collection('usuarios').insertOne(usuario)
+    res.status(201).json({nome,idade,email,_id: resultado.insertedId })
     }
     async listar(req: Request, res: Response) {
-        const usuarios = await db.collection('usuarios').find().toArray()
-        const usuariosSemSenha = usuarios.map(({ senha, ...resto }) => resto)
+    const db = dbPromise ? await dbPromise : dbSync
+    const usuarios = await db.collection('usuarios').find().toArray()
+        const usuariosSemSenha = usuarios.map((u: any) => {
+            const { senha, ...resto } = u
+            return resto
+        })
         res.status(200).json(usuariosSemSenha)
     }
 }

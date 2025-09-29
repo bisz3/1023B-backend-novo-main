@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import { db } from '../database/banco-mongo.js'
+import { dbPromise, db as dbSync } from '../database/banco-mongo.js'
 import { ObjectId } from 'mongodb'
 
 interface ItemCarrinho {
@@ -27,6 +27,7 @@ class CarrinhoController {
 
         let produto: any
         try {
+            const db = dbPromise ? await dbPromise : dbSync
             produto = await db.collection('produtos').findOne({ _id: new ObjectId(produtoId) })
         } catch (err) {
             return res.status(400).json({ error: 'produtoId inválido' })
@@ -41,6 +42,7 @@ class CarrinhoController {
             nome: produto.nome,
         }
 
+    const db = dbPromise ? await dbPromise : dbSync
         const carrinho = await db.collection('carrinhos').findOne({ usuarioId }) as Carrinho | null
 
         if (!carrinho) {
@@ -88,6 +90,7 @@ class CarrinhoController {
         if (!usuarioId || !produtoId)
             return res.status(400).json({ error: 'usuarioId e produtoId são obrigatórios' })
 
+        const db = dbPromise ? await dbPromise : dbSync
         const carrinho = await db.collection('carrinhos').findOne({ usuarioId }) as Carrinho | null
         if (!carrinho) return res.status(404).json({ error: 'Carrinho não encontrado' })
 
@@ -116,22 +119,22 @@ class CarrinhoController {
         if (!usuarioId || !produtoId || quantidade === undefined)
             return res.status(400).json({ error: 'usuarioId, produtoId e quantidade são obrigatórios' })
 
+        const db = dbPromise ? await dbPromise : dbSync
         const carrinho = await db.collection('carrinhos').findOne({ usuarioId }) as Carrinho | null
         if (!carrinho) return res.status(404).json({ error: 'Carrinho não encontrado' })
 
         const itens = [...carrinho.itens]
-
-    const idx = itens.findIndex(i => i.produtoId === produtoId)
-    if (idx === -1) return res.status(404).json({ error: 'Item não encontrado no carrinho' })
+        const idx = itens.findIndex(i => i.produtoId === produtoId)
+        if (idx === -1) return res.status(404).json({ error: 'Item não encontrado no carrinho' })
 
         if (quantidade <= 0) {
             // remover o item
             return this.removerItem(req, res)
         }
 
-    const encontrado = itens[idx]!
-    encontrado.quantidade = quantidade
-    itens[idx] = encontrado
+        const encontrado = itens[idx]!
+        encontrado.quantidade = quantidade
+        itens[idx] = encontrado
         const total = itens.reduce((s, it) => s + it.precoUnitario * it.quantidade, 0)
 
         await db.collection('carrinhos').updateOne(
@@ -146,6 +149,7 @@ class CarrinhoController {
     // Listar carrinho(s). Se passar ?usuarioId=... retorna o carrinho do usuário, senão retorna todos
     async listar(req: Request, res: Response) {
         const usuarioId = (req.query.usuarioId as string) || (req.body && req.body.usuarioId)
+        const db = dbPromise ? await dbPromise : dbSync
         if (usuarioId) {
             const carrinho = await db.collection('carrinhos').findOne({ usuarioId })
             if (!carrinho) return res.status(404).json({ error: 'Carrinho não encontrado' })
@@ -161,6 +165,7 @@ class CarrinhoController {
         const usuarioId = (req.body && req.body.usuarioId) || (req.query && req.query.usuarioId)
         if (!usuarioId) return res.status(400).json({ error: 'usuarioId é obrigatório' })
 
+        const db = dbPromise ? await dbPromise : dbSync
         await db.collection('carrinhos').deleteOne({ usuarioId })
         return res.status(200).json({ message: 'Carrinho removido' })
     }
