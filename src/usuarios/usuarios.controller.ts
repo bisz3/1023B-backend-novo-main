@@ -15,9 +15,10 @@ class UsuariosController {
         const usuario = { nome, idade, email, senha: senhaCriptografada }
 
     try {
-    const db = dbPromise ? await dbPromise : dbSync
-    const resultado = await db.collection('usuarios').insertOne(usuario)
-    return res.status(201).json({nome,idade,email,_id: resultado.insertedId })
+        const db = dbPromise ? await dbPromise : dbSync
+        if (!db) throw new Error('DB not available')
+        const resultado = await db.collection('usuarios').insertOne(usuario)
+        return res.status(201).json({nome,idade,email,_id: resultado.insertedId })
     } catch (err: any) {
         console.error('Erro ao inserir usuário:', err && err.message ? err.message : err)
         return res.status(500).json({ error: 'Erro ao cadastrar usuário. Por favor, tente novamente.' })
@@ -25,8 +26,9 @@ class UsuariosController {
     }
     async listar(req: Request, res: Response) {
     try {
-    const db = dbPromise ? await dbPromise : dbSync
-    const usuarios = await db.collection('usuarios').find().toArray()
+        const db = dbPromise ? await dbPromise : dbSync
+        if (!db) throw new Error('DB not available')
+        const usuarios = await db.collection('usuarios').find().toArray()
         const usuariosSemSenha = usuarios.map((u: any) => {
             const { senha, ...resto } = u
             return resto

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express'
 import { dbPromise, db as dbSync } from '../database/banco-mongo.js'
 import { ObjectId } from 'mongodb'
+import { obterProdutoPorId } from '../produtos/produtos.controller.js'
 
 interface ItemCarrinho {
     produtoId: string
@@ -25,20 +26,20 @@ class CarrinhoController {
             return res.status(400).json({ error: 'usuarioId, produtoId e quantidade são obrigatórios' })
         if (quantidade <= 0) return res.status(400).json({ error: 'Quantidade deve ser maior que zero' })
 
+        // Try to resolve product from Mongo or from in-memory fallback
         let produto: any
         try {
-            const db = dbPromise ? await dbPromise : dbSync
-            produto = await db.collection('produtos').findOne({ _id: new ObjectId(produtoId) })
+            produto = await obterProdutoPorId(produtoId)
         } catch (err: any) {
-            if (err && err.name === 'BSONTypeError') return res.status(400).json({ error: 'produtoId inválido' })
             console.error('Erro ao buscar produto:', err && err.message ? err.message : err)
             return res.status(500).json({ error: 'Erro no servidor ao processar o pedido. Por favor, tente novamente.' })
         }
 
         if (!produto) return res.status(404).json({ error: 'Produto não encontrado' })
 
+        const resolvedProdutoId = produto._id && produto._id.toString ? produto._id.toString() : (produto.id ? String(produto.id) : produtoId)
         const item: ItemCarrinho = {
-            produtoId: produto._id.toString(),
+            produtoId: resolvedProdutoId,
             quantidade,
             precoUnitario: produto.preco,
             nome: produto.nome,
@@ -46,6 +47,7 @@ class CarrinhoController {
 
         try {
             const db = dbPromise ? await dbPromise : dbSync
+            if (!db) throw new Error('DB not available')
             const carrinho = await db.collection('carrinhos').findOne({ usuarioId }) as Carrinho | null
 
             if (!carrinho) {
@@ -98,6 +100,7 @@ class CarrinhoController {
 
         try {
             const db = dbPromise ? await dbPromise : dbSync
+            if (!db) throw new Error('DB not available')
             const carrinho = await db.collection('carrinhos').findOne({ usuarioId }) as Carrinho | null
             if (!carrinho) return res.status(404).json({ error: 'Carrinho não encontrado' })
 
@@ -132,6 +135,7 @@ class CarrinhoController {
 
         try {
             const db = dbPromise ? await dbPromise : dbSync
+            if (!db) throw new Error('DB not available')
             const carrinho = await db.collection('carrinhos').findOne({ usuarioId }) as Carrinho | null
             if (!carrinho) return res.status(404).json({ error: 'Carrinho não encontrado' })
 
@@ -167,6 +171,7 @@ class CarrinhoController {
         const usuarioId = (req.query.usuarioId as string) || (req.body && req.body.usuarioId)
         try {
             const db = dbPromise ? await dbPromise : dbSync
+            if (!db) throw new Error('DB not available')
             if (usuarioId) {
                 const carrinho = await db.collection('carrinhos').findOne({ usuarioId })
                 if (!carrinho) return res.status(404).json({ error: 'Carrinho não encontrado' })
@@ -188,6 +193,7 @@ class CarrinhoController {
 
         try {
             const db = dbPromise ? await dbPromise : dbSync
+            if (!db) throw new Error('DB not available')
             await db.collection('carrinhos').deleteOne({ usuarioId })
             return res.status(200).json({ message: 'Carrinho removido' })
         } catch (err: any) {
