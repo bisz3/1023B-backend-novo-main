@@ -1,23 +1,23 @@
-import { MongoClient, Db } from 'mongodb'
+import { MongoClient } from 'mongodb'
 
-// Exported bindings. We'll assign to these at runtime depending on environment.
-export let dbPromise: Promise<Db>
-export let db: Db | undefined = undefined
+// Export a mutable `db` and a `dbPromise` that resolves when connected.
+// Use multiple env var names for compatibility and fallbacks.
+export let db: any = undefined
 
-// If no MONGO_URI is provided, avoid constructing MongoClient (avoids errors like
-// "Cannot read properties of undefined (reading 'startsWith')").
-if (!process.env.MONGO_URI) {
-	// Provide a rejected promise so callers that await dbPromise get a clear error.
-	dbPromise = Promise.reject(new Error('MONGO_URI is not defined'))
-} else {
-	const client = new MongoClient(process.env.MONGO_URI)
+const uri = process.env.MONGO_URI || process.env.MONGOURI || process.env.MONGODB_URI
+const dbName = process.env.MONGO_DB || process.env.MONGODB || process.env.MONGODB_NAME || '1023b'
 
-	// Connect and export both a promise (dbPromise) and set the mutable `db` when ready.
-	// Tests can mock `db` while runtime code should prefer awaiting dbPromise.
-	const connectPromise = client.connect().then(() => client.db(process.env.MONGO_DB!))
+export const dbPromise = (async () => {
+	if (!uri) {
+		console.warn('MONGO URI not provided, skipping mongo connection (db will be undefined). Set MONGO_URI to enable DB.');
+		return undefined
+	}
 
-	dbPromise = connectPromise
+	const client = new MongoClient(uri)
+	await client.connect()
+	db = client.db(dbName)
+	console.info('Connected to MongoDB', dbName)
+	return db
+})()
 
-	// When the connection resolves, set the exported `db` as well for compatibility.
-	connectPromise.then(d => { db = d }).catch(() => { /* ignore connection errors at startup */ })
-}
+export { db as default }
