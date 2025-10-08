@@ -2,7 +2,8 @@ import express, { Request, Response } from 'express'
 import 'dotenv/config'
 import { MongoClient } from 'mongodb'
 import cors from 'cors'
-import rotas from './rotas'
+import rotas from './rotas.js'
+import './database/banco-mongo.js';
 
 const client = new MongoClient(process.env.MONGOURI!)
 await client.connect()

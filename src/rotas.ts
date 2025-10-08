@@ -1,17 +1,17 @@
 // No arquivo rotas.ts
 import Router from 'express';
-import CarrinhoController from './carrinho/carrinho.controller';
-import ProdutosController from './produtos/produtos.controller';
-import UsuariosController from './usuarios/usuarios.controller';
+import CarrinhoController from './carrinho/carrinho.js';
+import ProdutosController from './produtos/produtos.js';
+import UsuariosController from './usuarios/usuarios.js';
 
 const rotas = Router();
 
 // Rotas do carrinho
-rotas.get('/carrinho', CarrinhoController.listar.bind(CarrinhoController));
-rotas.post('/carrinho', CarrinhoController.adicionarItem.bind(CarrinhoController));
-rotas.put('/carrinho/:carrinhoId/itens/:itemId', CarrinhoController.atualizarQuantidade.bind(CarrinhoController));
-rotas.delete('/carrinho/:carrinhoId/itens/:itemId', CarrinhoController.removerItem.bind(CarrinhoController));
-rotas.delete('/carrinho/:carrinhoId', CarrinhoController.remover.bind(CarrinhoController));
+rotas.get('/carrinho', CarrinhoController.listar);
+rotas.post('/carrinho', CarrinhoController.adicionar);
+rotas.put('/carrinho/:carrinhoId/itens/:itemId', CarrinhoController.atualizarQuantidade);
+rotas.delete('/carrinho/:carrinhoId/itens/:itemId', CarrinhoController.removerItem);
+rotas.delete('/carrinho/:carrinhoId', CarrinhoController.removerCarrinho);
 
 // Rotas de produtos
 rotas.get('/produtos', ProdutosController.listar);

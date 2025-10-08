@@ -1,5 +1,5 @@
 import { Request, Response } from 'express'
-import {db} from '../database/banco-mongo'
+import {db} from '../database/banco-mongo.js'
 import bcrypt from 'bcrypt'
 
 class UsuariosController {
@@ -22,7 +22,6 @@ class UsuariosController {
             }
     
             // Verifica se o e-mail já está em uso
-            if (!db) return res.status(500).json({ message: 'Banco de dados não está conectado' })
             const usuarioExistente = await db.collection('usuarios').findOne({ email });
             if (usuarioExistente) {
                 return res.status(409).json({ message: 'Este e-mail já está cadastrado' });
@@ -48,9 +47,8 @@ class UsuariosController {
     }
 
     async listar(req: Request, res: Response) {
-        if (!db) return res.status(500).json({ message: 'Banco de dados não está conectado' })
         const usuarios = await db.collection('usuarios').find().toArray()
-        const usuariosSemSenha = (usuarios as any[]).map((usuario: any) => ({
+        const usuariosSemSenha = usuarios.map(usuario => ({
             ...usuario,
             senha: undefined
         }))
@@ -66,7 +64,6 @@ class UsuariosController {
             }
 
             // Encontra o usuário pelo e-mail
-            if (!db) return res.status(500).json({ message: 'Banco de dados não está conectado' })
             const usuario = await db.collection('usuarios').findOne({ email });
             if (!usuario) {
                 return res.status(404).json({ message: 'Usuário não encontrado' });
